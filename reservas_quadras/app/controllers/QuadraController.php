@@ -10,7 +10,6 @@ class QuadraController extends Controller {
             $quadras = $quadraModel->getAll();
             $this->render('quadras/index', ['quadras' => $quadras]);
         } catch (Exception $e) {
-            // Em um ambiente real, você logaria o erro e mostraria uma mensagem amigável
             $this->render('error', ['message' => 'Erro ao carregar quadras: ' . $e->getMessage()]);
         }
     }

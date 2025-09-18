@@ -6,7 +6,6 @@ require_once ROOT_PATH . '/app/models/Cliente.php';
 require_once ROOT_PATH . '/app/models/Reserva.php';
 require_once ROOT_PATH . '/app/models/Quadra.php';
 require_once ROOT_PATH . '/app/models/TipoEsporte.php';
-// A CORREÇÃO FOI FEITA AQUI: o ';' estava dentro das aspas
 require_once ROOT_PATH . '/app/models/Equipamento.php';
 require_once ROOT_PATH . '/app/models/WhatsAppNotification.php';
 
@@ -84,7 +83,7 @@ class ReservaController extends Controller {
                 try {
                     $this->db->beginTransaction();
 
-                    // 1. Verificar ou criar cliente
+                    // Verificar ou criar cliente
                     $cliente = $this->clienteModel->getByEmail($email_cliente);
                     $id_cliente = null;
                     if ($cliente) {
@@ -93,7 +92,7 @@ class ReservaController extends Controller {
                         $id_cliente = $this->clienteModel->create($nome_cliente, $email_cliente, $senha_cliente, $telefone_cliente);
                     }
 
-                    // 2. Inserir reserva
+                    // Inserir reserva
                     $id_reserva = $this->reservaModel->create($id_cliente, $id_quadra, $id_esporte, $id_equip, $data_reserva, $horario_reserva, $preco_reserva);
 
                     $this->db->commit();

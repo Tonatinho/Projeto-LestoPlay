@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
     $password = trim($_POST['password'] ?? '');
 
-    // Credenciais fixas para o exemplo. Em um sistema real, buscar do banco de dados.
+    // Credenciais fixas para o exemplo
     $admin_username = 'admin';
     $admin_password = 'admin'; // Senha em texto puro, NÃO USAR EM PRODUÇÃO!
 

@@ -73,10 +73,9 @@ class WhatsAppNotification {
     }
 
     private function enviarMensagem($telefone, $mensagem) {
-        // Em um ambiente real, aqui seria integrado com uma API do WhatsApp
-        // Como WhatsApp Business API, Twilio, ou similar
+        //WhatsApp Business API
         
-        // Por enquanto, vamos simular o envio e logar no banco de dados
+        // envio e logar no banco de dados
         try {
             $stmt = $this->db->prepare("
                 INSERT INTO LOG_WHATSAPP (telefone, mensagem, status, data_envio) 

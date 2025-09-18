@@ -47,7 +47,7 @@ class Avaliacao {
     }
 
     public function verificarPodeAvaliar($idCliente, $idReserva) {
-        // Verifica se a reserva existe, pertence ao cliente e já foi realizada
+        // Verifica se a reserva existe
         $stmt = $this->db->prepare("
             SELECT r.IDRESERVA 
             FROM RESERVAS r 

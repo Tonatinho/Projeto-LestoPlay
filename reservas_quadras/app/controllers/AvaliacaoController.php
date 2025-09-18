@@ -60,7 +60,7 @@ class AvaliacaoController extends Controller {
             exit;
         }
 
-        // Simular cliente logado (em um sistema real, viria da sessão)
+        // Simular cliente logado
         $idCliente = 1; // Temporário para demonstração
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {

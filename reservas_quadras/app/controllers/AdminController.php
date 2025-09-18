@@ -17,8 +17,8 @@ class AdminController extends Controller {
     }
 
     public function index() {
-        // Lógica para a página de administração
-        // Por enquanto, apenas carrega as reservas
+        // página de administração
+        // Por enquanto carrega as reservas
         try {
             $reservas = $this->db->query("SELECT r.*, c.NOME as cliente_nome, q.nome as quadra_nome FROM RESERVAS r JOIN CLIENTE c ON r.IDCLIENTE = c.IDCLIENTE JOIN quadras q ON r.IDQUADRA = q.id ORDER BY r.DATA DESC, r.HORARIO DESC")->fetchAll();
             $this->render('admin/index', ['reservas' => $reservas]);

@@ -16,7 +16,7 @@ unset($_SESSION['detalhes_reserva']);
 unset($_SESSION['mensagem']);
 unset($_SESSION['tipo_mensagem']);
 
-// Se não há detalhes, redirecionar
+// Se não tem nada entao redireciona
 if (!$detalhes) {
     header('Location: index.php');
     exit;
@@ -126,7 +126,7 @@ Valor: R$ <?php echo number_format($detalhes['preco'], 2, ',', '.'); ?>
     }
 }
 
-// Auto-redirecionar após 2 minutos (opcional)
+// Auto-redirecionar após 2 minutos
 setTimeout(function() {
     if (confirm('Deseja ir para a página inicial?')) {
         window.location.href = 'index.php';

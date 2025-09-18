@@ -48,12 +48,12 @@ class Caracteristica {
     }
 
     public function associateWithQuadra($idQuadra, $caracteristicasIds) {
-        // Primeiro, remove todas as associações existentes para esta quadra
+        // remove todas as associações existentes para esta quadra
         $stmt = $this->db->prepare("DELETE FROM QUADRA_CARACTERISTICAS WHERE IDQUADRA = :idQuadra");
         $stmt->bindParam(":idQuadra", $idQuadra, PDO::PARAM_INT);
         $stmt->execute();
 
-        // Em seguida, insere as novas associações
+        // insere as novas associações
         if (!empty($caracteristicasIds)) {
             $sql = "INSERT INTO QUADRA_CARACTERISTICAS (IDQUADRA, IDCARACTERISTICA) VALUES ";
             $values = [];
