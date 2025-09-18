@@ -24,7 +24,11 @@ $id_esporte = (int)($_POST["id_esporte"] ?? 0);
 $id_equip = (int)($_POST["id_equip"] ?? 0);
 $data_reserva = $_POST["data_reserva"] ?? "";
 $horario_reserva = $_POST["horario_reserva"] ?? "";
-$preco_reserva = (float)($_POST["preco_reserva"] ?? 0.0);
+        // Buscar o preço da quadra diretamente do banco de dados
+        $stmt_preco = $pdo->prepare("SELECT preco_hora FROM quadras WHERE id = :id_quadra");
+        $stmt_preco->bindParam(":id_quadra", $id_quadra);
+        $stmt_preco->execute();
+        $preco_reserva = (float)($stmt_preco->fetchColumn() ?? 0.0);
 
 $erros = [];
 
@@ -58,9 +62,7 @@ if (empty($data_reserva)) {
 if (empty($horario_reserva)) {
     $erros[] = "Horário é obrigatório";
 }
-if ($preco_reserva <= 0) {
-    $erros[] = "Preço da reserva deve ser maior que zero";
-}
+
 
 // Validar data não pode ser no passado
 if ($data_reserva && $data_reserva < date("Y-m-d")) {
@@ -149,6 +151,14 @@ if (empty($erros)) {
         
         if ($resultado) {
             $id_reserva = $pdo->lastInsertId();
+            
+            // Decrementar a quantidade do equipamento
+            if ($id_equip > 0) {
+                require_once ROOT_PATH . '/app/models/Equipamento.php';
+                $equipamentoModel = new Equipamento($pdo);
+                $equipamentoModel->updateQuantity($id_equip, -1);
+            }
+
             $pdo->commit();
             
             // Buscar nome da quadra para a página de sucesso
