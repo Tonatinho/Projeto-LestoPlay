@@ -69,14 +69,6 @@ class ReservaController extends Controller {
             if (empty($data_reserva)) $erros[] = "Data é obrigatória";
             if (empty($horario_reserva)) $erros[] = "Horário é obrigatório";
 
-            // Verificar disponibilidade do equipamento
-            if ($id_equip > 0) {
-                $equipamento_info = $this->equipamentoModel->getById($id_equip);
-                if (!$equipamento_info || $equipamento_info["QUANTIDADE"] <= 0) {
-                    $erros[] = "Equipamento selecionado não está disponível ou sem estoque.";
-                }
-            }
-
 
             // Validar data não pode ser no passado
             if ($data_reserva && $data_reserva < date('Y-m-d')) {
@@ -103,11 +95,6 @@ class ReservaController extends Controller {
 
                     // 2. Inserir reserva
                     $id_reserva = $this->reservaModel->create($id_cliente, $id_quadra, $id_esporte, $id_equip, $data_reserva, $horario_reserva, $preco_reserva);
-
-                    // Decrementar a quantidade do equipamento
-                    if ($id_equip > 0) {
-                        $this->equipamentoModel->updateQuantity($id_equip, -1);
-                    }
 
                     $this->db->commit();
 

@@ -151,14 +151,6 @@ if (empty($erros)) {
         
         if ($resultado) {
             $id_reserva = $pdo->lastInsertId();
-            
-            // Decrementar a quantidade do equipamento
-            if ($id_equip > 0) {
-                require_once ROOT_PATH . '/app/models/Equipamento.php';
-                $equipamentoModel = new Equipamento($pdo);
-                $equipamentoModel->updateQuantity($id_equip, -1);
-            }
-
             $pdo->commit();
             
             // Buscar nome da quadra para a página de sucesso

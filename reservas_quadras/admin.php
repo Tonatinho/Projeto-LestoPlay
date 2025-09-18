@@ -267,9 +267,6 @@ include ROOT_PATH . '/includes/header.php';
         <a href="?acao=reservas" class="btn btn-secondary">
             <i class="fas fa-calendar"></i> Ver Todas Reservas
         </a>
-        <a href="?acao=equipamentos" class="btn btn-secondary">
-            <i class="fas fa-dumbbell"></i> Gerenciar Equipamentos
-        </a>
     </div>
     
     <div class="admin-sections">
@@ -505,21 +502,5 @@ include ROOT_PATH . '/includes/header.php';
     </div>
 <?php endif; ?>
 
-<?php elseif ($acao === 'equipamentos'): ?>
-    <?php
-    require_once ROOT_PATH . '/app/controllers/EquipamentoController.php';
-    $equipamentoController = new EquipamentoController(conectarDB());
-    $equipamentoController->gerenciarEquipamentos();
-    ?>
-<?php elseif ($acao === 'processar_equipamento'): ?>
-    <?php
-    require_once ROOT_PATH . '/app/controllers/EquipamentoController.php';
-    $equipamentoController = new EquipamentoController(conectarDB());
-    $equipamentoController->processarEquipamento();
-    ?>
-<?php
+<?php include ROOT_PATH . '/includes/footer.php'; ?>
 
-include ROOT_PATH . 
-'/includes/footer.php';
-
-?>
