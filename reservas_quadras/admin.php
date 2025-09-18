@@ -20,14 +20,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['acao'])) {
         switch ($_POST['acao']) {
             case 'adicionar_quadra':
-                $nome = trim($_POST['nome']);
-                $localizacao = trim($_POST['localizacao']);
+                $nome = trim($_POST["nome"]);
+                $localizacao = trim($_POST["localizacao"]);
+                $preco_hora = (float)($_POST["preco_hora"] ?? 0.0);
                 
-                if (!empty($nome) && !empty($localizacao)) {
+                if (!empty($nome) && !empty($localizacao) && $preco_hora >= 0) {
                     try {
                         $pdo = conectarDB();
-                        $stmt = $pdo->prepare("INSERT INTO quadras (nome, localizacao) VALUES (:nome, :localizacao)");
-                        $stmt->execute([':nome' => $nome, ':localizacao' => $localizacao]);
+                        $stmt = $pdo->prepare("INSERT INTO quadras (nome, localizacao, preco_hora) VALUES (:nome, :localizacao, :preco_hora)");
+                        $stmt->execute([":nome" => $nome, ":localizacao" => $localizacao, ":preco_hora" => $preco_hora]);
                         $mensagem = "Quadra adicionada com sucesso!";
                         $tipo_mensagem = "success";
                     } catch (Exception $e) {
@@ -44,12 +45,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $id = (int)$_POST['id'];
                 $nome = trim($_POST['nome']);
                 $localizacao = trim($_POST['localizacao']);
+                $preco_hora = (float)($_POST['preco_hora'] ?? 0.0);
                 
-                if (!empty($nome) && !empty($localizacao)) {
+                if (!empty($nome) && !empty($localizacao) && $preco_hora >= 0) {
                     try {
                         $pdo = conectarDB();
-                        $stmt = $pdo->prepare("UPDATE quadras SET nome = :nome, localizacao = :localizacao WHERE id = :id");
-                        $stmt->execute([':nome' => $nome, ':localizacao' => $localizacao, ':id' => $id]);
+                        $stmt = $pdo->prepare("UPDATE quadras SET nome = :nome, localizacao = :localizacao, preco_hora = :preco_hora WHERE id = :id");
+                        $stmt->execute([':nome' => $nome, ':localizacao' => $localizacao, ':preco_hora' => $preco_hora, ':id' => $id]);
                         $mensagem = "Quadra atualizada com sucesso!";
                         $tipo_mensagem = "success";
                         $acao = ''; // Voltar para lista
@@ -59,6 +61,90 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 } else {
                     $mensagem = "Preencha todos os campos obrigatórios.";
+                    $tipo_mensagem = "error";
+                }
+                break;
+                
+            case 'excluir_quadra':
+                $id = (int)$_POST['id'];
+                
+                if ($id > 0) {
+                    try {
+                        $pdo = conectarDB();
+                        
+                        // Verificar se há reservas ativas para esta quadra
+                        $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM RESERVAS WHERE IDQUADRA = :id AND STATUS = 'ativa' AND DATA >= CURDATE()");
+                        $stmt->execute([':id' => $id]);
+                        $reservas_ativas = $stmt->fetch()['total'];
+                        
+                        if ($reservas_ativas > 0) {
+                            $mensagem = "Não é possível excluir esta quadra pois há {$reservas_ativas} reserva(s) ativa(s) para ela.";
+                            $tipo_mensagem = "error";
+                        } else {
+                            // Excluir a quadra (as reservas antigas serão mantidas para histórico)
+                            $stmt = $pdo->prepare("DELETE FROM quadras WHERE id = :id");
+                            $stmt->execute([':id' => $id]);
+                            $mensagem = "Quadra excluída com sucesso!";
+                            $tipo_mensagem = "success";
+                        }
+                    } catch (Exception $e) {
+                        $mensagem = "Erro ao excluir quadra: " . $e->getMessage();
+                        $tipo_mensagem = "error";
+                    }
+                } else {
+                    $mensagem = "ID da quadra inválido.";
+                    $tipo_mensagem = "error";
+                }
+                break;
+                
+            case 'excluir_reserva':
+                $id = (int)$_POST['id'];
+                
+                if ($id > 0) {
+                    try {
+                        $pdo = conectarDB();
+                        
+                        // Buscar dados da reserva antes de excluir para notificação
+                        $stmt = $pdo->prepare("
+                            SELECT r.*, c.NOME as nome_cliente, c.TELEFONE as telefone_cliente, q.nome as nome_quadra
+                            FROM RESERVAS r 
+                            JOIN CLIENTE c ON r.IDCLIENTE = c.IDCLIENTE
+                            JOIN quadras q ON r.IDQUADRA = q.id
+                            WHERE r.IDRESERVA = :id
+                        ");
+                        $stmt->execute([':id' => $id]);
+                        $reserva = $stmt->fetch();
+                        
+                        if ($reserva) {
+                            // Excluir a reserva
+                            $stmt = $pdo->prepare("DELETE FROM RESERVAS WHERE IDRESERVA = :id");
+                            $stmt->execute([':id' => $id]);
+                            
+                            // Enviar notificação de cancelamento via WhatsApp (se disponível)
+                            if (class_exists('WhatsAppNotification')) {
+                                require_once ROOT_PATH . '/app/models/WhatsAppNotification.php';
+                                $whatsapp = new WhatsAppNotification($pdo);
+                                $whatsapp->enviarCancelamento(
+                                    $reserva['telefone_cliente'],
+                                    $reserva['nome_cliente'],
+                                    $reserva['nome_quadra'],
+                                    $reserva['DATA'],
+                                    $reserva['HORARIO']
+                                );
+                            }
+                            
+                            $mensagem = "Reserva excluída com sucesso!";
+                            $tipo_mensagem = "success";
+                        } else {
+                            $mensagem = "Reserva não encontrada.";
+                            $tipo_mensagem = "error";
+                        }
+                    } catch (Exception $e) {
+                        $mensagem = "Erro ao excluir reserva: " . $e->getMessage();
+                        $tipo_mensagem = "error";
+                    }
+                } else {
+                    $mensagem = "ID da reserva inválido.";
                     $tipo_mensagem = "error";
                 }
                 break;
@@ -172,11 +258,17 @@ include ROOT_PATH . '/includes/header.php';
         <a href="?acao=adicionar" class="btn btn-primary">
             <i class="fas fa-plus"></i> Adicionar Quadra
         </a>
+        <a href="dashboard.php" class="btn btn-info">
+            <i class="fas fa-chart-bar"></i> Dashboard
+        </a>
         <a href="?acao=quadras" class="btn btn-secondary">
             <i class="fas fa-list"></i> Gerenciar Quadras
         </a>
         <a href="?acao=reservas" class="btn btn-secondary">
             <i class="fas fa-calendar"></i> Ver Todas Reservas
+        </a>
+        <a href="?acao=equipamentos" class="btn btn-secondary">
+            <i class="fas fa-dumbbell"></i> Gerenciar Equipamentos
         </a>
     </div>
     
@@ -239,6 +331,11 @@ include ROOT_PATH . '/includes/header.php';
                 <input type="text" id="localizacao" name="localizacao" required placeholder="Ex: Rua da Praia, 100">
             </div>
             
+            <div class="form-group">
+                <label for="preco_hora">Preço por Hora *</label>
+                <input type="number" id="preco_hora" name="preco_hora" step="0.01" min="0" value="0.00" required placeholder="Ex: 50.00">
+            </div>
+            
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save"></i> Salvar Quadra
@@ -271,7 +368,13 @@ include ROOT_PATH . '/includes/header.php';
             <div class="form-group">
                 <label for="localizacao">Localização *</label>
                 <input type="text" id="localizacao" name="localizacao" required 
-                       value="<?php echo htmlspecialchars($quadra_editando['localizacao']); ?>">
+                       value="<?php echo htmlspecialchars($quadra_editando["localizacao"]); ?>">
+            </div>
+            
+            <div class="form-group">
+                <label for="preco_hora">Preço por Hora *</label>
+                <input type="number" id="preco_hora" name="preco_hora" step="0.01" min="0" required 
+                       value="<?php echo htmlspecialchars($quadra_editando["preco_hora"]); ?>">
             </div>
             
             <div class="form-actions">
@@ -313,6 +416,13 @@ include ROOT_PATH . '/includes/header.php';
                                 <a href="?acao=editar&id=<?php echo $quadra['id']; ?>" class="btn btn-sm btn-primary">
                                     <i class="fas fa-edit"></i> Editar
                                 </a>
+                                <form method="POST" style="display:inline-block;" onsubmit="return confirm('Tem certeza que deseja excluir esta quadra? Esta ação não pode ser desfeita.');">
+                                    <input type="hidden" name="acao" value="excluir_quadra">
+                                    <input type="hidden" name="id" value="<?php echo $quadra['id']; ?>">
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i> Excluir
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -361,6 +471,7 @@ include ROOT_PATH . '/includes/header.php';
                         <th>Horário</th>
                         <th>Status</th>
                         <th>Preço</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -377,6 +488,15 @@ include ROOT_PATH . '/includes/header.php';
                             <td><?php echo formatarHora($reserva['HORARIO']); ?></td>
                             <td><span class="status status-<?php echo $reserva['STATUS']; ?>"><?php echo ucfirst($reserva['STATUS']); ?></span></td>
                             <td>R$ <?php echo number_format($reserva['PRECO'], 2, ',', '.'); ?></td>
+                            <td class="actions">
+                                <form method="POST" style="display:inline-block;" onsubmit="return confirm('Tem certeza que deseja excluir esta reserva? Esta ação não pode ser desfeita.');">
+                                    <input type="hidden" name="acao" value="excluir_reserva">
+                                    <input type="hidden" name="id" value="<?php echo $reserva['IDRESERVA']; ?>">
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i> Excluir
+                                    </button>
+                                </form>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -385,5 +505,21 @@ include ROOT_PATH . '/includes/header.php';
     </div>
 <?php endif; ?>
 
-<?php include ROOT_PATH . '/includes/footer.php'; ?>
+<?php elseif ($acao === 'equipamentos'): ?>
+    <?php
+    require_once ROOT_PATH . '/app/controllers/EquipamentoController.php';
+    $equipamentoController = new EquipamentoController(conectarDB());
+    $equipamentoController->gerenciarEquipamentos();
+    ?>
+<?php elseif ($acao === 'processar_equipamento'): ?>
+    <?php
+    require_once ROOT_PATH . '/app/controllers/EquipamentoController.php';
+    $equipamentoController = new EquipamentoController(conectarDB());
+    $equipamentoController->processarEquipamento();
+    ?>
+<?php
 
+include ROOT_PATH . 
+'/includes/footer.php';
+
+?>
