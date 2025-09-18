@@ -51,6 +51,19 @@ class Reserva {
 
         return $this->db->lastInsertId();
     }
+
+    public function getById($id) {
+        $stmt = $this->db->prepare("
+            SELECT r.*, q.nome as nome_quadra, c.NOME as nome_cliente 
+            FROM RESERVAS r 
+            JOIN quadras q ON r.IDQUADRA = q.id 
+            JOIN CLIENTE c ON r.IDCLIENTE = c.IDCLIENTE 
+            WHERE r.IDRESERVA = :id
+        ");
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch();
+    }
 }
 
 
