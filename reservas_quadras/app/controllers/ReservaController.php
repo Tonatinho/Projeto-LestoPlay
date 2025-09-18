@@ -8,6 +8,7 @@ require_once ROOT_PATH . '/app/models/Quadra.php';
 require_once ROOT_PATH . '/app/models/TipoEsporte.php';
 // A CORREÇÃO FOI FEITA AQUI: o ';' estava dentro das aspas
 require_once ROOT_PATH . '/app/models/Equipamento.php';
+require_once ROOT_PATH . '/app/models/WhatsAppNotification.php';
 
 class ReservaController extends Controller {
     public function __construct($db) {
@@ -17,6 +18,7 @@ class ReservaController extends Controller {
         $this->quadraModel = $this->loadModel('Quadra');
         $this->tipoEsporteModel = $this->loadModel('TipoEsporte');
         $this->equipamentoModel = $this->loadModel('Equipamento');
+        $this->whatsappModel = new WhatsAppNotification($this->db);
     }
 
     public function index() {
@@ -48,7 +50,11 @@ class ReservaController extends Controller {
             $id_equip = (int)$_POST['id_equip'];
             $data_reserva = $_POST['data_reserva'];
             $horario_reserva = $_POST['horario_reserva'];
-            $preco_reserva = (float)$_POST['preco_reserva'];
+            $quadra_info = $this->quadraModel->getById($id_quadra);
+            if (!$quadra_info) {
+                $erros[] = "Quadra selecionada não encontrada.";
+            }
+            $preco_reserva = $quadra_info['preco_hora'] ?? 0.0;
 
             // Validações de cliente
             if (empty($nome_cliente)) $erros[] = "Nome é obrigatório";
@@ -62,7 +68,15 @@ class ReservaController extends Controller {
             if (empty($id_equip)) $erros[] = "Selecione um equipamento";
             if (empty($data_reserva)) $erros[] = "Data é obrigatória";
             if (empty($horario_reserva)) $erros[] = "Horário é obrigatório";
-            if ($preco_reserva <= 0) $erros[] = "Preço da reserva deve ser maior que zero";
+
+            // Verificar disponibilidade do equipamento
+            if ($id_equip > 0) {
+                $equipamento_info = $this->equipamentoModel->getById($id_equip);
+                if (!$equipamento_info || $equipamento_info["QUANTIDADE"] <= 0) {
+                    $erros[] = "Equipamento selecionado não está disponível ou sem estoque.";
+                }
+            }
+
 
             // Validar data não pode ser no passado
             if ($data_reserva && $data_reserva < date('Y-m-d')) {
@@ -90,7 +104,23 @@ class ReservaController extends Controller {
                     // 2. Inserir reserva
                     $id_reserva = $this->reservaModel->create($id_cliente, $id_quadra, $id_esporte, $id_equip, $data_reserva, $horario_reserva, $preco_reserva);
 
+                    // Decrementar a quantidade do equipamento
+                    if ($id_equip > 0) {
+                        $this->equipamentoModel->updateQuantity($id_equip, -1);
+                    }
+
                     $this->db->commit();
+
+                    // Enviar notificação WhatsApp
+                    $quadra_nome = $quadra_info['nome'];
+                    $this->whatsappModel->enviarConfirmacaoReserva(
+                        $telefone_cliente,
+                        $nome_cliente,
+                        $quadra_nome,
+                        $data_reserva,
+                        $horario_reserva,
+                        $preco_reserva
+                    );
 
                     $mensagem = "Reserva realizada com sucesso!";
                     $tipo_mensagem = "success";
