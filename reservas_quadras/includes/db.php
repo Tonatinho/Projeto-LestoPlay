@@ -6,7 +6,7 @@ define("DB_USER", "root");
 define("DB_PASS", "");
 define("DB_NAME", "lestoplay2025");
 
-// Função para conectar ao banco de dados e retornar o objeto PDO
+// Função para conectar ao banco de dados e retornar o objeto
 function conectarDB() {
     try {
         $pdo = new PDO(
@@ -25,7 +25,7 @@ function conectarDB() {
     }
 }
 
-// Funções de formatação (podem ser movidas para uma classe de utilidade no futuro)
+// Funções de formatação 
 function formatarDataBR($data) {
     return date("d/m/Y", strtotime($data));
 }
