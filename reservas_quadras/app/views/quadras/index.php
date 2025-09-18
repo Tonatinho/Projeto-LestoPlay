@@ -28,13 +28,33 @@ include_once ROOT_PATH . '/includes/header.php';
                 <div class="quadra-card">
                     <div class="quadra-header">
                         <h3><?php echo htmlspecialchars($quadra['nome']); ?></h3>
-                        <span class="preco"></span>
+                        <span class="preco">R$ <?php echo number_format($quadra["preco_hora"], 2, ",", "."); ?>/h</span>
                     </div>
                     
                     <div class="quadra-body">
                         <p class="descricao">
                             Localização: <?php echo htmlspecialchars($quadra['localizacao'] ?: 'Não informada'); ?>
                         </p>
+                        
+                        <?php if ($quadra['total_avaliacoes'] > 0): ?>
+                            <div class="avaliacoes-info">
+                                <div class="estrelas">
+                                    <?php 
+                                    $media = round($quadra['media_avaliacao'], 1);
+                                    for ($i = 1; $i <= 5; $i++): 
+                                        if ($i <= $media): ?>
+                                            <i class="fas fa-star estrela-preenchida"></i>
+                                        <?php else: ?>
+                                            <i class="far fa-star estrela-vazia"></i>
+                                        <?php endif;
+                                    endfor; ?>
+                                </div>
+                                <span class="media-numero"><?php echo number_format($media, 1, ',', '.'); ?></span>
+                                <span class="total-avaliacoes">(<?php echo $quadra['total_avaliacoes']; ?> avaliações)</span>
+                            </div>
+                        <?php else: ?>
+                            <p class="sem-avaliacoes">Sem avaliações ainda</p>
+                        <?php endif; ?>
                         
                         <div class="quadra-features">
                             <span class="feature"><i class="fas fa-lightbulb"></i> Iluminação</span>
@@ -46,6 +66,9 @@ include_once ROOT_PATH . '/includes/header.php';
                     <div class="quadra-footer">
                         <a href="reserva.php?quadra=<?php echo $quadra['id']; ?>" class="btn btn-primary">
                             <i class="fas fa-calendar-plus"></i> Reservar
+                        </a>
+                        <a href="avaliacoes.php?quadra=<?php echo $quadra['id']; ?>" class="btn btn-info">
+                            <i class="fas fa-star"></i> Ver Avaliações
                         </a>
                         <button class="btn btn-secondary" onclick="verDisponibilidade(<?php echo $quadra['id']; ?>)">
                             <i class="fas fa-clock"></i> Ver Horários
@@ -147,6 +170,83 @@ window.addEventListener('click', function(e) {
     }
 });
 </script>
+
+<style>
+.avaliacoes-info {
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.estrelas {
+    display: flex;
+    gap: 2px;
+}
+
+.estrela-preenchida {
+    color: #ffc107;
+    font-size: 0.9em;
+}
+
+.estrela-vazia {
+    color: #dee2e6;
+    font-size: 0.9em;
+}
+
+.media-numero {
+    font-weight: bold;
+    color: #007bff;
+    font-size: 0.9em;
+}
+
+.total-avaliacoes {
+    color: #6c757d;
+    font-size: 0.85em;
+}
+
+.sem-avaliacoes {
+    color: #6c757d;
+    font-size: 0.85em;
+    font-style: italic;
+    margin: 10px 0;
+}
+
+.quadra-footer {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.quadra-footer .btn {
+    flex: 1;
+    min-width: 120px;
+    font-size: 0.85em;
+    padding: 8px 12px;
+}
+
+.btn-info {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+    color: white;
+}
+
+.btn-info:hover {
+    background-color: #138496;
+    border-color: #117a8b;
+}
+
+@media (max-width: 768px) {
+    .quadra-footer {
+        flex-direction: column;
+    }
+    
+    .quadra-footer .btn {
+        flex: none;
+        width: 100%;
+    }
+}
+</style>
 
 <?php include_once ROOT_PATH . '/includes/footer.php'; ?>
 

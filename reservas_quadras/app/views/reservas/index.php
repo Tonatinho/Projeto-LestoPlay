@@ -80,9 +80,11 @@ include_once __DIR__ . '/../../../includes/header.php';
                 <select id="id_equip" name="id_equip" required>
                     <option value="">Selecione o equipamento</option>
                     <?php foreach ($equipamentos as $equip): ?>
-                        <option value="<?php echo $equip['IDEQUIP']; ?>"
-                                <?php echo (isset($id_equip) && $id_equip == $equip['IDEQUIP']) ? 'selected' : ''; ?>>
-                            <?php echo htmlspecialchars($equip['NOME']); ?> (<?php echo htmlspecialchars($equip['QUANTIDADE']); ?> disponíveis)
+                        <option value="<?php echo $equip["IDEQUIP"]; ?>"
+                                <?php echo (isset($id_equip) && $id_equip == $equip["IDEQUIP"]) ? "selected" : ""; ?>
+                                <?php echo ($equip["QUANTIDADE"] <= 0) ? "disabled" : ""; ?>>
+                            <?php echo htmlspecialchars($equip["NOME"]); ?> 
+                            <?php echo ($equip["QUANTIDADE"] <= 0) ? "(Esgotado)" : "(" . $equip["QUANTIDADE"] . " disponíveis)"; ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -101,11 +103,7 @@ include_once __DIR__ . '/../../../includes/header.php';
                     <input type="time" id="horario_reserva" name="horario_reserva" required 
                            value="<?php echo htmlspecialchars($horario_reserva ?? ''); ?>">
                 </div>
-                <div class="form-group">
-                    <label for="preco_reserva">Preço da Reserva *</label>
-                    <input type="number" id="preco_reserva" name="preco_reserva" step="0.01" min="0.01" required 
-                           value="<?php echo htmlspecialchars($preco_reserva ?? ''); ?>">
-                </div>
+
             </div>
             
             <div class="form-group">
