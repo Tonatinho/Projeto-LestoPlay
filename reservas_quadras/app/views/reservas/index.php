@@ -1,6 +1,4 @@
 <?php
-// __DIR__ é uma constante mágica que sempre retorna o caminho do diretório do arquivo atual.
-// É a forma mais segura de montar caminhos de arquivos.
 include_once __DIR__ . '/../../../includes/header.php';
 ?>
 
@@ -148,6 +146,5 @@ document.getElementById('telefone_cliente').addEventListener('input', function(e
 });
 </script>
 
-<?php include __DIR__ . 
-'../../../includes/footer.php'; ?>
+<?php include_once __DIR__ . '/../../../includes/footer.php'; ?>
 
